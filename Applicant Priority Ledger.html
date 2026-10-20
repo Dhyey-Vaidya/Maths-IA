@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Applicant Priority Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Fira+Sans:wght@400;500&family=Fira+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#231F20;
+    --paper:#FFFFFF;
+    --tint:#F3F3F3;
+    --surface:#FFFFFF;
+    --border:#D9D9D9;
+    --highlight:#FFCB05;
+    --brand:#B7202E;
+    --brand-dark:#8E1823;
+    --red:#B7202E;
+    --muted:#58595B;
+    --font-serif:'Marcellus',Georgia,'Times New Roman',serif;
+    --font-sans:'Fira Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    --font-mono:'Fira Mono','SFMono-Regular',Menlo,monospace;
+    color-scheme:light;
+  }
+  *{box-sizing:border-box;}
+  input,select,textarea,button{color:var(--ink);font-family:inherit;}
+  ::placeholder{color:var(--muted);opacity:1;}
+  body{
+    margin:0;
+    border-top:4px solid var(--brand);
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-sans);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
+  .ledger{max-width:720px;margin:0 auto;padding:36px 20px 80px;}
+
+  .masthead{margin-bottom:44px;}
+  .masthead h1{
+    font-family:var(--font-serif);
+    font-weight:400;
+    font-size:1.9rem;
+    margin:0 0 8px;
+    letter-spacing:-0.01em;
+  }
+  .masthead .subtitle{margin:0 0 14px;color:var(--muted);max-width:52ch;}
+  .masthead .stats{
+    font-family:var(--font-mono);
+    font-size:0.82rem;
+    color:var(--brand);
+    margin:0;
+    padding-top:12px;
+    border-top:1px solid var(--border);
+  }
+
+  .stage{position:relative;padding-left:26px;margin-bottom:52px;}
+  .stage::before{
+    content:'';position:absolute;left:5px;top:4px;bottom:-52px;width:1px;background:var(--border);
+  }
+  .stage:last-of-type::before{display:none;}
+  .stage::after{
+    content:'';position:absolute;left:1px;top:1px;width:9px;height:9px;border-radius:50%;
+    background:var(--brand);border:2px solid var(--paper);
+  }
+  .stage-label{
+    font-family:var(--font-serif);font-weight:400;
+    font-size:1.15rem;color:var(--ink);margin:0 0 4px;
+  }
+  .stage-desc{margin:0 0 16px;color:var(--muted);font-size:0.92rem;max-width:50ch;}
+
+  fieldset{border:1px solid var(--border);border-radius:3px;padding:14px 16px 16px;margin:0 0 12px;}
+  legend{font-size:0.82rem;color:var(--muted);padding:0 6px;}
+  .field-row{margin-bottom:12px;}
+  .field-row label{display:block;font-size:0.85rem;margin-bottom:5px;}
+  .field-row input[type="text"]{
+    width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:3px;
+    font-family:var(--font-sans);font-size:0.95rem;background:var(--surface);
+  }
+  .checks{display:flex;flex-wrap:wrap;gap:12px 20px;}
+  .check-item{display:flex;align-items:center;gap:6px;font-size:0.87rem;}
+  .sliders{display:grid;grid-template-columns:1fr;gap:12px;}
+  .slider-item{display:flex;flex-direction:column;gap:4px;}
+  .slider-item .slider-head{display:flex;justify-content:space-between;font-size:0.85rem;}
+  .slider-item output{font-family:var(--font-mono);color:var(--brand);}
+  input[type="range"]{width:100%;accent-color:var(--brand);}
+
+  .btn{
+    font-family:var(--font-sans);font-size:0.88rem;font-weight:500;padding:9px 16px;
+    border-radius:3px;border:1px solid var(--brand);background:var(--brand);color:#fff;cursor:pointer;
+  }
+  .btn:hover{background:var(--brand-dark);border-color:var(--brand-dark);}
+  .btn-secondary{background:transparent;color:var(--ink);border:1px solid var(--ink);}
+  .btn-secondary:hover{background:var(--tint);}
+  .btn-small{padding:5px 10px;font-size:0.78rem;}
+  .btn-row{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 18px;}
+
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;}
+  .applicant-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:12px;
+  }
+  .applicant-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:8px;}
+  .applicant-name{font-weight:500;font-size:0.92rem;}
+  .badge{font-size:0.68rem;padding:2px 7px;border-radius:2px;white-space:nowrap;font-weight:500;}
+  .badge-ok{background:var(--ink);color:#fff;}
+  .badge-no{background:rgba(183,32,46,0.10);color:var(--red);}
+  .badge-pending{background:var(--tint);color:var(--muted);}
+  .applicant-stats{display:flex;gap:10px;font-size:0.78rem;color:var(--muted);margin-bottom:8px;flex-wrap:wrap;}
+  .applicant-stats b{font-family:var(--font-mono);color:var(--ink);}
+  .lit-row{display:flex;gap:5px;margin-bottom:10px;}
+  .lit{
+    width:20px;height:20px;display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-mono);font-size:0.7rem;border:1px solid var(--border);border-radius:2px;color:var(--border);
+  }
+  .lit-on{background:var(--muted);border-color:var(--muted);color:#fff;}
+  .fail-detail{color:var(--red);font-size:0.78rem;margin:0 0 8px;}
+  .remove-btn{
+    background:none;border:none;color:var(--muted);font-size:0.72rem;cursor:pointer;padding:0;text-decoration:underline;
+  }
+  .empty{color:var(--muted);font-size:0.88rem;font-style:italic;}
+
+  .legend-dl{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;margin:0 0 18px;font-size:0.85rem;}
+  .legend-dl div{display:flex;gap:6px;}
+  .legend-dl dt{font-family:var(--font-mono);color:var(--brand);margin:0;}
+  .legend-dl dd{margin:0;color:var(--muted);}
+
+  .criteria-list{margin-bottom:14px;}
+  .crit-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.86rem;}
+  .crit-row:last-child{border-bottom:none;}
+  .crit-name{flex:1;}
+  .crit-type{color:var(--muted);font-size:0.76rem;font-family:var(--font-mono);}
+  .crit-form-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .crit-form-row input[type="text"]{
+    flex:2;min-width:170px;padding:8px 10px;border:1px solid var(--border);border-radius:3px;
+    font-size:0.9rem;background:var(--surface);
+  }
+  .crit-form-row select{padding:8px 10px;border:1px solid var(--border);border-radius:3px;font-size:0.85rem;background:var(--surface);}
+  .crit-form-row input[type="number"]{width:130px;padding:8px 10px;border:1px solid var(--border);border-radius:3px;background:var(--surface);}
+  .crit-field{display:flex;align-items:center;gap:6px;font-size:0.87rem;}
+  .crit-amount{flex-direction:column;align-items:flex-start;gap:4px;}
+  .crit-amount input[type="number"]{width:130px;padding:6px 8px;border:1px solid var(--border);border-radius:3px;background:var(--surface);}
+  .import-box{display:flex;align-items:center;gap:10px;margin:4px 0 8px;flex-wrap:wrap;}
+  .csv-filename{font-size:0.8rem;color:var(--muted);}
+  .hint{font-size:0.8rem;color:var(--muted);margin:0 0 14px;}
+
+  .rule-input-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .rule-input-row input[type="text"]{
+    flex:1;min-width:200px;padding:9px 10px;border:1px solid var(--border);border-radius:3px;
+    font-family:var(--font-mono);font-size:0.9rem;background:var(--surface);
+  }
+  .rule-error{color:var(--red);font-size:0.82rem;min-height:1.2em;margin:0 0 8px;}
+  .example-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .rule-output{
+    background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:14px 16px;margin-bottom:8px;
+  }
+  .rule-output .rule-line{font-size:0.88rem;margin:0 0 8px;}
+  .rule-output .rule-line span.tag{color:var(--muted);}
+  .rule-output code{font-family:var(--font-mono);background:var(--tint);padding:1px 5px;border-radius:2px;}
+  .rule-output .law-note{font-size:0.82rem;color:var(--muted);margin:0;}
+
+  details.note{
+    background:transparent;border:1px dashed var(--border);border-radius:3px;padding:10px 14px;margin:14px 0 18px;
+  }
+  details.note summary{cursor:pointer;font-size:0.85rem;color:var(--brand);}
+  details.note p{font-size:0.85rem;color:var(--muted);margin:10px 0 0;}
+
+  .graph-wrap{max-width:360px;margin:0 auto 14px;}
+  .graph-wrap.wide{max-width:100%;}
+  .graph-svg{width:100%;height:auto;display:block;}
+  .legend-list{list-style:none;margin:0 0 18px;padding:0;font-size:0.82rem;color:var(--muted);}
+  .legend-list li{padding:2px 0;}
+  .legend-list .tie-flag{color:var(--red);font-size:0.76rem;margin-left:6px;}
+  .map-msg{color:var(--muted);font-size:0.88rem;font-style:italic;}
+
+  .ll-panel{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:14px 16px;margin-bottom:20px;}
+  .ll-panel h3{font-family:var(--font-serif);font-weight:500;font-size:0.95rem;margin:0 0 10px;}
+  .ll-track{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:0.85rem;}
+  .ll-node{border:1px solid var(--ink);border-radius:3px;padding:6px 10px;background:var(--tint);}
+  .ll-arrow{color:var(--muted);font-family:var(--font-mono);}
+  .ll-empty{color:var(--muted);font-size:0.85rem;font-style:italic;margin:0;}
+
+  .review-panel{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:16px;}
+  .review-panel select{
+    font-family:var(--font-sans);padding:6px 8px;border:1px solid var(--border);border-radius:3px;margin-bottom:14px;
+  }
+  .review-card{border-left:3px solid var(--red);padding-left:12px;margin-bottom:12px;}
+  .review-card h3{font-family:var(--font-serif);font-weight:400;font-size:1.05rem;margin:0 0 6px;}
+  .review-card .applicant-stats{margin-bottom:0;}
+  .review-controls{display:flex;align-items:center;gap:12px;}
+  .review-position{font-size:0.8rem;color:var(--muted);margin:0;}
+
+  details.closing{margin-top:8px;}
+  details.closing summary{cursor:pointer;font-family:var(--font-serif);color:var(--brand);}
+  details.closing ul{font-size:0.86rem;color:var(--muted);padding-left:20px;margin:12px 0 0;}
+  details.closing li{margin-bottom:10px;}
+
+  @media (max-width:480px){
+    .ledger{padding:26px 14px 60px;}
+    .masthead h1{font-size:1.55rem;}
+    .legend-dl{grid-template-columns:1fr;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{scroll-behavior:auto !important;}
+  }
+</style>
+</head>
+<body>
+<div class="ledger">
+
+  <header class="masthead">
+    <h1>Applicant Priority Ledger</h1>
+    <p class="subtitle">Screen who qualifies, map who outranks whom, and flag the ties a committee needs to settle by hand.</p>
+    <p class="stats" id="stats">0 applicants on file. 0 flagged for committee review.</p>
+  </header>
+
+  <!-- CRITERIA -->
+  <section class="stage" id="stage-criteria">
+    <h2 class="stage-label">Screening criteria</h2>
+    <p class="stage-desc">Define what gets checked at eligibility screening: a plain yes/no check, or a minimum amount an applicant needs to meet or beat, like years of experience or a required score. This is for screening only — the ranking scores below are separate.</p>
+
+    <div id="criteria-list" class="criteria-list"></div>
+
+    <form id="criteria-form">
+      <div class="crit-form-row">
+        <input type="text" id="crit-name" placeholder="Criterion name, e.g. Years of experience" required>
+        <select id="crit-type">
+          <option value="bool">Yes / no</option>
+          <option value="amount">Minimum amount</option>
+        </select>
+        <input type="number" id="crit-ideal" placeholder="Ideal (minimum)" step="any" hidden>
+        <button type="submit" class="btn btn-small">Add criterion</button>
+      </div>
+    </form>
+    <p class="rule-error" id="crit-error"></p>
+  </section>
+
+  <!-- INTAKE -->
+  <section class="stage" id="stage-intake">
+    <h2 class="stage-label">Intake</h2>
+    <p class="stage-desc">Add each applicant's eligibility documents and priority scores, or load a sample set to try the tool right away.</p>
+
+    <form id="intake-form">
+      <div class="field-row">
+        <label for="f-name">Applicant name</label>
+        <input type="text" id="f-name" placeholder="e.g. Jordan Alvarez" required>
+      </div>
+      <fieldset>
+        <legend>Screening criteria for this applicant</legend>
+        <div class="checks" id="intake-criteria-fields"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Priority scores (0 to 10)</legend>
+        <p class="hint">These don't affect eligibility — that's the screening criteria above. They only feed the priority map below, ranking applicants who already passed screening against each other. Financial need is how much the applicant needs this resource; academic merit is their qualification or achievement level; community impact is the benefit to others if they receive it. Score each 0-10 by your own judgment, and rename the labels for your write-up if these placeholders don't fit.</p>
+        <div class="sliders">
+          <div class="slider-item">
+            <div class="slider-head"><span>Financial need</span><output id="need-val">5</output></div>
+            <input type="range" id="f-need" min="0" max="10" value="5" oninput="document.getElementById('need-val').textContent=this.value">
+          </div>
+          <div class="slider-item">
+            <div class="slider-head"><span>Academic merit</span><output id="merit-val">5</output></div>
+            <input type="range" id="f-merit" min="0" max="10" value="5" oninput="document.getElementById('merit-val').textContent=this.value">
+          </div>
+          <div class="slider-item">
+            <div class="slider-head"><span>Community impact</span><output id="impact-val">5</output></div>
+            <input type="range" id="f-impact" min="0" max="10" value="5" oninput="document.getElementById('impact-val').textContent=this.value">
+          </div>
+        </div>
+      </fieldset>
+      <div class="btn-row">
+        <button type="submit" class="btn">Add applicant</button>
+        <button type="button" class="btn btn-secondary" id="load-sample">Load 8 sample applicants</button>
+      </div>
+    </form>
+
+    <p class="stage-desc">Or bring in a batch from a file, using the same criteria defined above for every row.</p>
+    <div class="import-box">
+      <label for="csv-file" class="btn btn-secondary btn-small">Choose CSV file</label>
+      <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none;">
+      <span class="csv-filename" id="csv-filename"></span>
+    </div>
+    <p class="hint" id="csv-format-hint"></p>
+    <p class="rule-error" id="csv-error"></p>
+
+    <div id="applicant-list" class="card-grid">
+      <p class="empty">No applicants yet. Add one above, load the sample set, or import a file.</p>
+    </div>
+  </section>
+
+  <!-- ELIGIBILITY / LOGIC -->
+  <section class="stage" id="stage-eligibility">
+    <h2 class="stage-label">Eligibility rule</h2>
+    <p class="stage-desc">Write the committee's eligibility rule using AND, OR, NOT and the letters below. The rule is reduced with the laws of logic, not a truth table.</p>
+
+    <dl class="legend-dl" id="rule-legend"></dl>
+
+    <form id="rule-form">
+      <div class="rule-input-row">
+        <input type="text" id="rule-input" placeholder="e.g. (A AND B) OR ((A AND B) AND C)">
+        <button type="submit" class="btn">Apply rule</button>
+      </div>
+    </form>
+    <p class="rule-error" id="rule-error"></p>
+    <div class="example-row">
+      <button type="button" class="btn btn-secondary btn-small" id="example-absorption">Try an absorption example</button>
+      <button type="button" class="btn btn-secondary btn-small" id="example-demorgan">Try a De Morgan's example</button>
+    </div>
+
+    <div class="rule-output" id="rule-output" hidden>
+      <p class="rule-line"><span class="tag">You entered:</span> <code id="rule-original"></code></p>
+      <p class="rule-line"><span class="tag">Simplified to:</span> <code id="rule-simplified"></code></p>
+      <p class="law-note" id="rule-laws"></p>
+    </div>
+  </section>
+
+  <!-- DOMINANCE + HASSE -->
+  <section class="stage" id="stage-map">
+    <h2 class="stage-label">Priority map</h2>
+    <p class="stage-desc">Build the dominance relation between eligible applicants, then peel it into priority tiers.</p>
+
+    <div class="btn-row">
+      <button type="button" class="btn" id="build-map-btn">Build priority map</button>
+    </div>
+    <p class="map-msg" id="map-msg"></p>
+
+    <details class="note">
+      <summary>How this stays fast as the list grows</summary>
+      <p>Finding the top tier only compares a new applicant against the current leading group, not every applicant on file, so adding one more name doesn't mean redoing every past comparison. At the scale a single committee handles by hand, brute-force comparison would finish just as fast; the saving becomes visible once the list runs into the hundreds.</p>
+    </details>
+
+    <div id="map-output" hidden>
+      <h3 class="stage-label" style="font-size:0.9rem;">Dominance digraph</h3>
+      <p class="stage-desc">An arrow from one applicant to another means the first outranks the second on every score. Node numbers run in priority order starting from the top, clockwise. Tap a node to see its outrank list.</p>
+      <div class="graph-wrap">
+        <div id="digraph-svg"></div>
+      </div>
+      <ul class="legend-list" id="digraph-legend"></ul>
+
+      <div class="ll-panel" id="linked-list-panel" hidden>
+        <h3 id="ll-title"></h3>
+        <div class="ll-track" id="ll-track"></div>
+      </div>
+
+      <h3 class="stage-label" style="font-size:0.9rem;">Priority tiers (Hasse diagram)</h3>
+      <p class="stage-desc">Each row is a tier: applicants nobody in the remaining pool outranks. Yellow marks the top tier; a red outline marks a tie inside a tier.</p>
+      <div class="graph-wrap wide">
+        <div id="hasse-svg"></div>
+      </div>
+      <ul class="legend-list" id="hasse-legend"></ul>
+    </div>
+  </section>
+
+  <!-- REVIEW QUEUE -->
+  <section class="stage" id="stage-review">
+    <h2 class="stage-label">Review queue</h2>
+    <p class="stage-desc">Tied applicants sit in a circular queue, one tier at a time, so a reviewer can step through them and loop back to the start.</p>
+
+    <p class="map-msg" id="review-msg">Build the priority map above to see who needs review.</p>
+
+    <div class="review-panel" id="review-output" hidden>
+      <select id="tier-select"></select>
+      <div class="review-card">
+        <h3 id="review-name"></h3>
+        <div class="applicant-stats" id="review-stats"></div>
+      </div>
+      <div class="review-controls">
+        <button type="button" class="btn btn-secondary btn-small" id="review-prev">Previous</button>
+        <button type="button" class="btn btn-secondary btn-small" id="review-next">Next</button>
+      </div>
+      <p class="review-position" id="review-position"></p>
+    </div>
+  </section>
+
+  <details class="closing">
+    <summary>What each stage is built on</summary>
+    <ul>
+      <li><strong>Intake and eligibility rule</strong> runs on propositional logic (Module 1). The rule is parsed into an expression tree and reduced with rewrite rules — double negation, idempotent, complement, absorption, De Morgan's — instead of a truth table.</li>
+      <li><strong>Dominance map</strong> is a relation and digraph (Module 3). Each applicant's outrank list is a singly linked list; together they form the adjacency list of a directed graph.</li>
+      <li><strong>Priority tiers</strong> form a poset (Module 4). Tiers are the antichains left after repeatedly peeling off the maximal, non-dominated elements; the diagram drawn is the transitive reduction of the dominance relation, i.e. its Hasse diagram.</li>
+      <li><strong>Review queue</strong> is a circular doubly linked list, so a reviewer can step forward or back through a tied tier and it wraps around instead of stopping at the end.</li>
+    </ul>
+  </details>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- small utility ---------- */
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  /* ============================================================
+     DSA: singly linked list — used as the adjacency list for the
+     dominance digraph (Module 3).
+     ============================================================ */
+  class LinkedListNode{
+    constructor(value){ this.value=value; this.next=null; }
+  }
+  class LinkedList{
+    constructor(){ this.head=null; this.length=0; }
+    append(value){
+      const node=new LinkedListNode(value);
+      if(!this.head){ this.head=node; }
+      else{ let cur=this.head; while(cur.next) cur=cur.next; cur.next=node; }
+      this.length++;
+      return this;
+    }
+    includes(value){ let cur=this.head; while(cur){ if(cur.value===value) return true; cur=cur.next; } return false; }
+    toArray(){ const out=[]; let cur=this.head; while(cur){ out.push(cur.value); cur=cur.next; } return out; }
+  }
+
+  /* ============================================================
+     DSA: circular doubly linked list — used for the review queue,
+     so a reviewer can cycle through tied applicants in either
+     direction without hitting an end.
+     ============================================================ */
+  class CDNode{
+    constructor(value){ this.value=value; this.prev=null; this.next=null; }
+  }
+  class CircularDoublyLinkedList{
+    constructor(items){ this.current=null; this.length=0; if(items && items.length) this.build(items); }
+    build(items){
+      this.current=null; this.length=0;
+      let first=null, prev=null;
+      for(const item of items){
+        const node=new CDNode(item);
+        if(!first) first=node;
+        if(prev){ prev.next=node; node.prev=prev; }
+        prev=node;
+        this.length++;
+      }
+      if(first){ first.prev=prev; prev.next=first; }
+      this.current=first;
+    }
+    next(){ if(this.current) this.current=this.current.next; return this.current; }
+    prev(){ if(this.current) this.current=this.current.prev; return this.current; }
+  }
+
+  /* ============================================================
+     Module 1: propositional logic — tokenizer, parser, and a
+     rewrite-rule simplifier (laws of logic, not truth tables).
+     ============================================================ */
+  function tokenize(str){
+    const tokens=[];
+    const re=/\(|\)|AND|OR|NOT|[A-Za-z]/g;
+    let m;
+    while((m=re.exec(str))!==null){
+      const t=m[0];
+      if(/^and$/i.test(t)) tokens.push({type:'AND'});
+      else if(/^or$/i.test(t)) tokens.push({type:'OR'});
+      else if(/^not$/i.test(t)) tokens.push({type:'NOT'});
+      else if(t==='(') tokens.push({type:'LP'});
+      else if(t===')') tokens.push({type:'RP'});
+      else tokens.push({type:'LIT', name:t.toUpperCase()});
+    }
+    return tokens;
+  }
+
+  function parse(tokens){
+    let pos=0;
+    function peek(){ return tokens[pos]; }
+    function consume(type){
+      const t=tokens[pos];
+      if(!t || t.type!==type) throw new Error('parse error');
+      pos++; return t;
+    }
+    function parseOr(){
+      let node=parseAnd();
+      while(peek() && peek().type==='OR'){ consume('OR'); node={type:'OR', left:node, right:parseAnd()}; }
+      return node;
+    }
+    function parseAnd(){
+      let node=parseNot();
+      while(peek() && peek().type==='AND'){ consume('AND'); node={type:'AND', left:node, right:parseNot()}; }
+      return node;
+    }
+    function parseNot(){
+      if(peek() && peek().type==='NOT'){ consume('NOT'); return {type:'NOT', operand:parseNot()}; }
+      return parseAtom();
+    }
+    function parseAtom(){
+      const t=peek();
+      if(!t) throw new Error('parse error');
+      if(t.type==='LIT'){ consume('LIT'); return {type:'LIT', name:t.name}; }
+      if(t.type==='LP'){ consume('LP'); const node=parseOr(); consume('RP'); return node; }
+      throw new Error('parse error');
+    }
+    if(!tokens.length) throw new Error('empty');
+    const tree=parseOr();
+    if(pos!==tokens.length) throw new Error('parse error');
+    return tree;
+  }
+
+  function treeEqual(a,b){
+    if(!a || !b) return a===b;
+    if(a.type!==b.type) return false;
+    if(a.type==='LIT') return a.name===b.name;
+    if(a.type==='NOT') return treeEqual(a.operand,b.operand);
+    return treeEqual(a.left,b.left) && treeEqual(a.right,b.right);
+  }
+  function isNegationOf(a,b){ return a.type==='NOT' && treeEqual(a.operand,b); }
+
+  function simplifyOnce(node, laws){
+    if(node.type==='LIT') return node;
+    if(node.type==='NOT'){
+      const operand=simplifyOnce(node.operand, laws);
+      if(operand.type==='NOT'){ laws.add('double negation'); return operand.operand; }
+      if(operand.type==='AND'){ laws.add("De Morgan's law"); return {type:'OR', left:{type:'NOT',operand:operand.left}, right:{type:'NOT',operand:operand.right}}; }
+      if(operand.type==='OR'){ laws.add("De Morgan's law"); return {type:'AND', left:{type:'NOT',operand:operand.left}, right:{type:'NOT',operand:operand.right}}; }
+      return {type:'NOT', operand};
+    }
+    let left=simplifyOnce(node.left, laws);
+    let right=simplifyOnce(node.right, laws);
+    if(treeEqual(left,right)){ laws.add('idempotent law'); return left; }
+    if(node.type==='AND'){
+      if(isNegationOf(left,right) || isNegationOf(right,left)){ laws.add('complement law'); return {type:'LIT', name:'FALSE'}; }
+      if(right.type==='OR' && (treeEqual(right.left,left) || treeEqual(right.right,left))){ laws.add('absorption law'); return left; }
+      if(left.type==='OR' && (treeEqual(left.left,right) || treeEqual(left.right,right))){ laws.add('absorption law'); return right; }
+    } else {
+      if(isNegationOf(left,right) || isNegationOf(right,left)){ laws.add('complement law'); return {type:'LIT', name:'TRUE'}; }
+      if(right.type==='AND' && (treeEqual(right.left,left) || treeEqual(right.right,left))){ laws.add('absorption law'); return left; }
+      if(left.type==='AND' && (treeEqual(left.left,right) || treeEqual(left.right,right))){ laws.add('absorption law'); return right; }
+    }
+    return {type:node.type, left, right};
+  }
+
+  function simplifyFixpoint(node){
+    const laws=new Set();
+    let prev=node, cur=simplifyOnce(node, laws), iterations=0;
+    while(!treeEqual(prev,cur) && iterations<25){ prev=cur; cur=simplifyOnce(cur, laws); iterations++; }
+    return {tree:cur, laws:Array.from(laws)};
+  }
+
+  function evaluate(node, values){
+    if(node.type==='LIT'){
+      if(node.name==='TRUE') return true;
+      if(node.name==='FALSE') return false;
+      return !!values[node.name];
+    }
+    if(node.type==='NOT') return !evaluate(node.operand, values);
+    if(node.type==='AND') return evaluate(node.left,values) && evaluate(node.right,values);
+    return evaluate(node.left,values) || evaluate(node.right,values);
+  }
+
+  function toStr(node){
+    if(node.type==='LIT') return node.name==='TRUE' ? 'True' : node.name==='FALSE' ? 'False' : node.name;
+    if(node.type==='NOT'){
+      const inner = node.operand.type==='LIT' ? toStr(node.operand) : '('+toStr(node.operand)+')';
+      return '¬'+inner;
+    }
+    const op = node.type==='AND' ? ' ∧ ' : ' ∨ ';
+    const wrap = n => (n.type==='LIT'||n.type==='NOT') ? toStr(n) : '('+toStr(n)+')';
+    return wrap(node.left)+op+wrap(node.right);
+  }
+
+  function collectLiterals(node, set){
+    set = set || new Set();
+    if(node.type==='LIT'){ if(node.name!=='TRUE' && node.name!=='FALSE') set.add(node.name); }
+    else if(node.type==='NOT') collectLiterals(node.operand, set);
+    else { collectLiterals(node.left, set); collectLiterals(node.right, set); }
+    return set;
+  }
+
+  /* ============================================================
+     Module 3: relations and digraphs — Pareto dominance between
+     applicants, stored as a linked-list adjacency list.
+     ============================================================ */
+  function dominates(a,b){
+    const keys=['need','merit','impact'];
+    let atLeastAsGood=true, strictlyBetter=false;
+    for(const k of keys){
+      if(a[k] < b[k]){ atLeastAsGood=false; break; }
+      if(a[k] > b[k]) strictlyBetter=true;
+    }
+    return atLeastAsGood && strictlyBetter;
+  }
+
+  function buildDominanceGraph(applicants){
+    const adj={};
+    applicants.forEach(a => adj[a.id]=new LinkedList());
+    for(const a of applicants){
+      for(const b of applicants){
+        if(a.id!==b.id && dominates(a,b)) adj[a.id].append(b.id);
+      }
+    }
+    return adj;
+  }
+
+  /* ============================================================
+     Module 4: posets and Hasse diagrams.
+     computeFrontier only compares a new candidate against the
+     current maximal frontier, not the whole set — see the "how
+     this stays fast" note in the UI for the honest scale caveat.
+     ============================================================ */
+  function computeFrontier(applicants){
+    let frontier=[];
+    for(const cand of applicants){
+      let dominated=false;
+      frontier = frontier.filter(f=>{
+        if(dominates(cand,f)) return false;
+        if(dominates(f,cand)) dominated=true;
+        return true;
+      });
+      if(!dominated) frontier.push(cand);
+    }
+    return frontier;
+  }
+
+  function computeTiers(applicants){
+    let remaining=[...applicants];
+    const tiers=[];
+    while(remaining.length){
+      const frontier=computeFrontier(remaining);
+      tiers.push(frontier);
+      const ids=new Set(frontier.map(a=>a.id));
+      remaining=remaining.filter(a=>!ids.has(a.id));
+    }
+    return tiers;
+  }
+
+  function transitiveReduction(applicants, adj){
+    const edges=[];
+    for(const a of applicants){
+      const direct=adj[a.id].toArray();
+      for(const bId of direct){
+        const redundant = direct.some(cId => cId!==bId && adj[cId].includes(bId));
+        if(!redundant) edges.push([a.id, bId]);
+      }
+    }
+    return edges;
+  }
+
+  /* ============================================================
+     File import: a small hand-rolled CSV reader (quoted fields,
+     escaped quotes, CRLF/LF) so the app stays dependency-free.
+     Assumes one fixed, documented column format — see
+     renderCsvFormatHint() for what that format is at any moment.
+     ============================================================ */
+  function parseCSV(text){
+    const rows=[]; let row=[], field='', inQuotes=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i];
+      if(inQuotes){
+        if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else inQuotes=false; }
+        else field+=c;
+      } else {
+        if(c==='"') inQuotes=true;
+        else if(c===','){ row.push(field); field=''; }
+        else if(c==='\n' || c==='\r'){
+          if(c==='\r' && text[i+1]==='\n') i++;
+          row.push(field); field='';
+          rows.push(row); row=[];
+        } else field+=c;
+      }
+    }
+    if(field.length || row.length){ row.push(field); rows.push(row); }
+    return rows.filter(r=>!(r.length===1 && r[0].trim()===''));
+  }
+
+  function parseCSVToObjects(text){
+    const rows=parseCSV(text);
+    if(!rows.length) return [];
+    const headers=rows[0].map(h=>h.trim());
+    return rows.slice(1).map(r=>{
+      const obj={};
+      headers.forEach((h,i)=>{ obj[h]=(r[i]!==undefined?r[i]:'').trim(); });
+      return obj;
+    });
+  }
+
+  function findColumn(row,name){
+    const key=Object.keys(row).find(k=>k.trim().toLowerCase()===name.trim().toLowerCase());
+    return key ? row[key] : undefined;
+  }
+
+  function parseBoolCell(cell){
+    if(cell===undefined || cell===null) return false;
+    const v=cell.toString().trim().toLowerCase();
+    return v==='yes' || v==='true' || v==='1' || v==='y';
+  }
+
+  /* ============================================================
+     Application state and rendering
+     ============================================================ */
+  const state={
+    applicants:[],
+    nextId:1,
+    criteria:[
+      {letter:'A', name:'Enrolled full-time', type:'bool'},
+      {letter:'B', name:'Meets minimum GPA', type:'bool'},
+      {letter:'C', name:'Documents complete', type:'bool'},
+      {letter:'D', name:'Financial need verified', type:'bool'}
+    ],
+    nextLetterCode:69, // 'E' — A-D are reserved by the default criteria above
+    ruleApplied:false,
+    simplifiedTree:null,
+    usedLiterals:[],
+    tiers:[],
+    adj:{},
+    coverEdges:[],
+    reviewLists:{},
+    currentTierIndex:null,
+    labelOf:{}
+  };
+
+  function critName(letter){
+    const c=state.criteria.find(x=>x.letter===letter);
+    return c ? c.name : letter;
+  }
+
+  function renderCriteriaList(){
+    const el=document.getElementById('criteria-list');
+    if(state.criteria.length===0){
+      el.innerHTML='<p class="empty">No criteria yet — add at least one below.</p>';
+      return;
+    }
+    el.innerHTML = state.criteria.map(c=>`
+      <div class="crit-row">
+        <span class="lit lit-on">${c.letter}</span>
+        <span class="crit-name">${esc(c.name)}</span>
+        <span class="crit-type">${c.type==='amount' ? 'minimum '+c.ideal : 'yes / no'}</span>
+        <button type="button" class="remove-btn" data-letter="${c.letter}">Remove</button>
+      </div>`).join('');
+    el.querySelectorAll('.remove-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        state.criteria = state.criteria.filter(c=>c.letter!==btn.dataset.letter);
+        renderCriteriaList();
+        renderIntakeCriteriaFields();
+        renderRuleLegend();
+        renderCsvFormatHint();
+      });
+    });
+  }
+
+  function renderIntakeCriteriaFields(){
+    const el=document.getElementById('intake-criteria-fields');
+    if(state.criteria.length===0){
+      el.innerHTML='<p class="empty">Add at least one screening criterion above first.</p>';
+      return;
+    }
+    el.innerHTML = state.criteria.map(c=>{
+      if(c.type==='bool'){
+        return `<label class="check-item crit-field"><input type="checkbox" class="crit-input" data-letter="${c.letter}" data-type="bool" checked> ${esc(c.name)}</label>`;
+      }
+      return `<label class="crit-field crit-amount"><span>${esc(c.name)} (ideal: ${c.ideal}+)</span><input type="number" class="crit-input" data-letter="${c.letter}" data-type="amount" step="any" value="${c.ideal}"></label>`;
+    }).join('');
+  }
+
+  function renderRuleLegend(){
+    const el=document.getElementById('rule-legend');
+    if(state.criteria.length===0){
+      el.innerHTML='<p class="empty">Define criteria above to get letters for the rule.</p>';
+      return;
+    }
+    el.innerHTML = state.criteria.map(c=>
+      `<div><dt>${c.letter}</dt><dd>${esc(c.name)}${c.type==='amount' ? ' (at least '+c.ideal+')' : ''}</dd></div>`
+    ).join('');
+  }
+
+  function renderCsvFormatHint(){
+    const el=document.getElementById('csv-format-hint');
+    const cols = state.criteria.map(c => c.type==='bool' ? `${c.name} (yes/no)` : `${c.name} (number)`);
+    const all = ['Name', ...cols, 'Need', 'Merit', 'Impact'];
+    el.textContent = 'Expected columns, in any order: ' + all.join(', ') + '.';
+  }
+
+  function updateStats(){
+    const total=state.applicants.length;
+    let reviewCount=0;
+    state.tiers.forEach(t=>{ if(t.length>1) reviewCount+=t.length; });
+    document.getElementById('stats').textContent =
+      `${total} applicant${total===1?'':'s'} on file. ${reviewCount} flagged for committee review.`;
+  }
+
+  function renderApplicants(){
+    const list=document.getElementById('applicant-list');
+    if(state.applicants.length===0){
+      list.innerHTML='<p class="empty">No applicants yet. Add one above or load the sample set.</p>';
+      return;
+    }
+    list.innerHTML = state.applicants.map(a=>{
+      const badge = !state.ruleApplied
+        ? '<span class="badge badge-pending">Not yet screened</span>'
+        : (a.eligible ? '<span class="badge badge-ok">Eligible</span>' : '<span class="badge badge-no">Not eligible</span>');
+      const litTags = state.criteria.map(c=>`<span class="lit ${a.elig[c.letter]?'lit-on':''}">${c.letter}</span>`).join('');
+      let diagnostic='';
+      if(state.ruleApplied && a.eligible===false){
+        const used = state.usedLiterals || [];
+        const failing = used.filter(k => !a.elig[k]);
+        const reason = failing.length
+          ? 'Missing: ' + failing.map(k => critName(k)).join(', ')
+          : "Doesn't satisfy the rule as written.";
+        diagnostic = `<p class="fail-detail">${esc(reason)}</p>`;
+      }
+      return `<div class="applicant-card">
+        <div class="applicant-card-head">
+          <span class="applicant-name">${esc(a.name)}</span>
+          ${badge}
+        </div>
+        <div class="applicant-stats">
+          <span>Need <b>${a.need}</b></span>
+          <span>Merit <b>${a.merit}</b></span>
+          <span>Impact <b>${a.impact}</b></span>
+        </div>
+        <div class="lit-row">${litTags}</div>
+        ${diagnostic}
+        <button type="button" class="remove-btn" data-id="${a.id}">Remove</button>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.remove-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id=Number(btn.dataset.id);
+        state.applicants = state.applicants.filter(a=>a.id!==id);
+        renderApplicants();
+        updateStats();
+      });
+    });
+  }
+
+  function applyRule(){
+    const input=document.getElementById('rule-input').value.trim();
+    const errEl=document.getElementById('rule-error');
+    errEl.textContent='';
+    if(!input){ errEl.textContent='Enter a rule first, or try one of the examples below.'; return; }
+    let tree;
+    try{
+      tree=parse(tokenize(input));
+    }catch(e){
+      errEl.textContent="Couldn't read that rule — check the parentheses and operators (AND / OR / NOT).";
+      return;
+    }
+    const original=toStr(tree);
+    const {tree:simplified, laws}=simplifyFixpoint(tree);
+    state.simplifiedTree=simplified;
+    state.usedLiterals=Array.from(collectLiterals(simplified)).sort();
+    state.ruleApplied=true;
+
+    document.getElementById('rule-original').textContent=original;
+    document.getElementById('rule-simplified').textContent=toStr(simplified);
+    document.getElementById('rule-laws').textContent = laws.length
+      ? ('Simplified using ' + laws.join(', ') + '.')
+      : 'Already in simplest form — no rewrite rule applied.';
+    document.getElementById('rule-output').hidden=false;
+
+    state.applicants.forEach(a=>{ a.eligible = evaluate(simplified, a.elig); });
+    renderApplicants();
+    updateStats();
+  }
+
+  function buildPriorityMap(){
+    const eligible = state.applicants.filter(a => a.eligible !== false);
+    const msg=document.getElementById('map-msg');
+    if(eligible.length < 2){
+      msg.textContent='Add at least two eligible applicants to map dominance.';
+      document.getElementById('map-output').hidden=true;
+      return;
+    }
+    msg.textContent='';
+
+    state.adj = buildDominanceGraph(eligible);
+    state.tiers = computeTiers(eligible);
+    state.coverEdges = transitiveReduction(eligible, state.adj);
+
+    // Flatten tiers (best first) into a single ranked order, so node
+    // numbers and the digraph's layout both start from the top priority
+    // tier rather than whatever order applicants happened to be added in.
+    const ranked = [].concat(...state.tiers);
+    state.labelOf={};
+    ranked.forEach((a,i)=>{ state.labelOf[a.id]=i+1; });
+
+    state.reviewLists = {};
+    state.tiers.forEach((tier,i)=>{ if(tier.length>1) state.reviewLists[i]=new CircularDoublyLinkedList(tier); });
+
+    renderDigraph(ranked);
+    renderHasse(eligible);
+    populateTierSelect();
+    document.getElementById('map-output').hidden=false;
+    document.getElementById('linked-list-panel').hidden=true;
+    updateStats();
+  }
+
+  function svgEl(svg, tag, attrs){
+    const el=document.createElementNS(svg.namespaceURI, tag);
+    for(const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function renderDigraph(eligible){
+    const container=document.getElementById('digraph-svg');
+    container.innerHTML='';
+    const w=320,h=320,cx=w/2,cy=h/2,r=Math.min(w,h)/2-42;
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('class','graph-svg');
+
+    const defs=svgEl(svg,'defs',{});
+    const marker=svgEl(svg,'marker',{id:'arrow1',viewBox:'0 0 10 10',refX:'9',refY:'5',markerWidth:'6',markerHeight:'6',orient:'auto-start-reverse'});
+    const arrowPath=svgEl(svg,'path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'#58595B'});
+    marker.appendChild(arrowPath); defs.appendChild(marker); svg.appendChild(defs);
+
+    const n=eligible.length;
+    const positions={};
+    eligible.forEach((a,i)=>{
+      const angle=(2*Math.PI*i/n) - Math.PI/2;
+      positions[a.id]={x:cx+r*Math.cos(angle), y:cy+r*Math.sin(angle)};
+    });
+
+    eligible.forEach(a=>{
+      state.adj[a.id].toArray().forEach(bId=>{
+        const p1=positions[a.id], p2=positions[bId];
+        const dx=p2.x-p1.x, dy=p2.y-p1.y, dist=Math.hypot(dx,dy)||1, shrink=17;
+        const line=svgEl(svg,'line',{
+          x1:p1.x+dx/dist*shrink, y1:p1.y+dy/dist*shrink,
+          x2:p2.x-dx/dist*shrink, y2:p2.y-dy/dist*shrink,
+          stroke:'#58595B','stroke-width':'1.3', opacity:'0.55', 'marker-end':'url(#arrow1)'
+        });
+        svg.appendChild(line);
+      });
+    });
+
+    eligible.forEach(a=>{
+      const p=positions[a.id];
+      const g=svgEl(svg,'g',{tabindex:'0'});
+      g.style.cursor='pointer';
+      g.appendChild(svgEl(svg,'circle',{cx:p.x, cy:p.y, r:'15', fill:'#FFFFFF', stroke:'#231F20', 'stroke-width':'1.4'}));
+      const text=svgEl(svg,'text',{x:p.x, y:p.y+4, 'text-anchor':'middle','font-size':'12','font-family':'Fira Mono, monospace', fill:'#231F20'});
+      text.textContent=state.labelOf[a.id];
+      g.appendChild(text);
+      g.addEventListener('click', ()=>showLinkedListPanel(a));
+      g.addEventListener('keypress', e=>{ if(e.key==='Enter') showLinkedListPanel(a); });
+      svg.appendChild(g);
+    });
+
+    container.appendChild(svg);
+
+    const legend=document.getElementById('digraph-legend');
+    legend.innerHTML='';
+    eligible.forEach(a=>{
+      const li=document.createElement('li');
+      li.textContent=`${state.labelOf[a.id]}. ${a.name}`;
+      legend.appendChild(li);
+    });
+  }
+
+  function showLinkedListPanel(a){
+    const panel=document.getElementById('linked-list-panel');
+    panel.hidden=false;
+    document.getElementById('ll-title').textContent = `${a.name}'s outrank list (singly linked list)`;
+    const track=document.getElementById('ll-track');
+    track.innerHTML='';
+    const list=state.adj[a.id].toArray();
+    if(list.length===0){
+      track.innerHTML=`<p class="ll-empty">Points to nothing — ${esc(a.name)} doesn't outrank any other eligible applicant.</p>`;
+      return;
+    }
+    list.forEach((id,i)=>{
+      const app=state.applicants.find(x=>x.id===id);
+      const box=document.createElement('div');
+      box.className='ll-node';
+      box.textContent = app ? app.name : '—';
+      track.appendChild(box);
+      const arrow=document.createElement('span');
+      arrow.className='ll-arrow';
+      arrow.textContent='→';
+      track.appendChild(arrow);
+    });
+    const tail=document.createElement('span');
+    tail.className='ll-arrow';
+    tail.textContent='null';
+    track.appendChild(tail);
+    panel.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto':'smooth', block:'nearest'});
+  }
+
+  function renderHasse(eligible){
+    const container=document.getElementById('hasse-svg');
+    container.innerHTML='';
+    const tiers=state.tiers;
+    const rowH=76, topPad=36, w=520;
+    const h=topPad*2 + rowH*Math.max(tiers.length-1,0) + 10;
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('class','graph-svg');
+
+    const positions={};
+    tiers.forEach((tier,ti)=>{
+      const y=topPad+ti*rowH;
+      const n=tier.length;
+      tier.forEach((a,i)=>{ positions[a.id]={x: 24 + ((w-48)/(n+1))*(i+1), y}; });
+    });
+
+    // Plain line segments, no arrowheads: a Hasse diagram's convention is
+    // that "higher on the page outranks lower" carries the direction, so an
+    // arrow would just repeat information the layout already shows.
+    state.coverEdges.forEach(([aId,bId])=>{
+      const p1=positions[aId], p2=positions[bId];
+      if(!p1||!p2) return;
+      svg.appendChild(svgEl(svg,'line',{
+        x1:p1.x, y1:p1.y, x2:p2.x, y2:p2.y,
+        stroke:'#58595B','stroke-width':'1.3'
+      }));
+    });
+
+    tiers.forEach((tier,ti)=>{
+      const isTop = ti===0;
+      const tied = tier.length>1;
+      tier.forEach(a=>{
+        const p=positions[a.id];
+        const g=svgEl(svg,'g',{});
+        g.appendChild(svgEl(svg,'circle',{
+          cx:p.x, cy:p.y, r:'6',
+          fill: isTop ? '#FFCB05' : '#231F20',
+          stroke: tied ? '#B7202E' : (isTop ? '#231F20' : 'none'),
+          'stroke-width': tied ? '2' : (isTop ? '1.2' : '0')
+        }));
+        const text=svgEl(svg,'text',{x:p.x+12, y:p.y+4, 'text-anchor':'start','font-size':'12','font-family':'Fira Mono, monospace', fill:'#231F20'});
+        text.textContent=state.labelOf[a.id];
+        g.appendChild(text);
+        svg.appendChild(g);
+      });
+    });
+
+    container.appendChild(svg);
+
+    const legend=document.getElementById('hasse-legend');
+    legend.innerHTML='';
+    tiers.forEach((tier,ti)=>{
+      const li=document.createElement('li');
+      const strong=document.createElement('strong');
+      strong.textContent = `Tier ${ti+1}${ti===0 ? ' (highest priority)' : ''}: `;
+      li.appendChild(strong);
+      li.appendChild(document.createTextNode(tier.map(a=>`${state.labelOf[a.id]}. ${a.name}`).join(', ')));
+      if(tier.length>1){
+        const flag=document.createElement('span');
+        flag.className='tie-flag';
+        flag.textContent='tied — needs committee review';
+        li.appendChild(flag);
+      }
+      legend.appendChild(li);
+    });
+  }
+
+  function populateTierSelect(){
+    const select=document.getElementById('tier-select');
+    select.innerHTML='';
+    const tiedIndices = state.tiers.map((t,i)=>i).filter(i=>state.tiers[i].length>1);
+    if(tiedIndices.length===0){
+      document.getElementById('review-output').hidden=true;
+      document.getElementById('review-msg').textContent='No ties on any tier — priority order is fully determined by the diagram above.';
+      return;
+    }
+    document.getElementById('review-msg').textContent='';
+    document.getElementById('review-output').hidden=false;
+    tiedIndices.forEach(i=>{
+      const opt=document.createElement('option');
+      opt.value=i;
+      opt.textContent=`Tier ${i+1} (${state.tiers[i].length} tied)`;
+      select.appendChild(opt);
+    });
+    state.currentTierIndex=tiedIndices[0];
+    select.value=state.currentTierIndex;
+    renderReviewQueue();
+  }
+
+  function renderReviewQueue(){
+    const cdll=state.reviewLists[state.currentTierIndex];
+    if(!cdll || !cdll.current) return;
+    const a=cdll.current.value;
+    document.getElementById('review-name').textContent=a.name;
+    document.getElementById('review-stats').innerHTML =
+      `<span>Need <b>${a.need}</b></span><span>Merit <b>${a.merit}</b></span><span>Impact <b>${a.impact}</b></span>`;
+    document.getElementById('review-position').textContent =
+      `Cycling through ${cdll.length} tied applicants — press next to loop back to the start.`;
+  }
+
+  /* ---------- wire up events ---------- */
+  document.getElementById('intake-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    const name=document.getElementById('f-name').value.trim();
+    if(!name) return;
+    const elig={}, raw={};
+    document.querySelectorAll('#intake-criteria-fields .crit-input').forEach(input=>{
+      const letter=input.dataset.letter;
+      if(input.dataset.type==='bool'){
+        elig[letter]=input.checked;
+      } else {
+        const val=Number(input.value || 0);
+        raw[letter]=val;
+        const crit=state.criteria.find(c=>c.letter===letter);
+        elig[letter]= crit ? val>=crit.ideal : false;
+      }
+    });
+    const applicant={
+      id: state.nextId++,
+      name,
+      need: Number(document.getElementById('f-need').value),
+      merit: Number(document.getElementById('f-merit').value),
+      impact: Number(document.getElementById('f-impact').value),
+      elig, raw,
+      eligible: state.ruleApplied ? null : true
+    };
+    if(state.ruleApplied && state.simplifiedTree) applicant.eligible=evaluate(state.simplifiedTree, applicant.elig);
+    state.applicants.push(applicant);
+    this.reset();
+    document.getElementById('need-val').textContent='5';
+    document.getElementById('merit-val').textContent='5';
+    document.getElementById('impact-val').textContent='5';
+    renderApplicants();
+    updateStats();
+  });
+
+  document.getElementById('load-sample').addEventListener('click', function(){
+    const base=[
+      ['Maria Santos',9,6,5],
+      ['Amara Okafor',9,6,5],
+      ['Priya Natarajan',7,8,9],
+      ['James Whitfield',4,9,7],
+      ['Sofia Marchetti',8,5,6],
+      ['Noah Kim',5,5,5],
+      ['Devon Cole',3,4,2],
+      ["Liam O'Brien",2,3,9]
+    ];
+    base.forEach(([name,need,merit,impact], i)=>{
+      const elig={}, raw={};
+      state.criteria.forEach((c,ci)=>{
+        if(c.type==='bool'){
+          // deterministic spread so most pass but each criterion trips up at least one applicant
+          elig[c.letter] = ((i+ci) % 5) !== 0;
+        } else {
+          const val = Math.max(0, c.ideal + (((i*2 + ci*3) % 7) - 3));
+          raw[c.letter]=val;
+          elig[c.letter] = val >= c.ideal;
+        }
+      });
+      const applicant={ id:state.nextId++, name, need, merit, impact, elig, raw, eligible: state.ruleApplied ? null : true };
+      if(state.ruleApplied && state.simplifiedTree) applicant.eligible=evaluate(state.simplifiedTree, applicant.elig);
+      state.applicants.push(applicant);
+    });
+    renderApplicants();
+    updateStats();
+  });
+
+  document.getElementById('crit-type').addEventListener('change', function(){
+    document.getElementById('crit-ideal').hidden = this.value!=='amount';
+  });
+
+  document.getElementById('criteria-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    const errEl=document.getElementById('crit-error');
+    errEl.textContent='';
+    const name=document.getElementById('crit-name').value.trim();
+    if(!name) return;
+    const type=document.getElementById('crit-type').value;
+    const idealField=document.getElementById('crit-ideal');
+    if(type==='amount' && idealField.value.trim()===''){
+      errEl.textContent='Enter an ideal (minimum) amount for this criterion.';
+      return;
+    }
+    const criterion={ letter:String.fromCharCode(state.nextLetterCode++), name, type };
+    if(type==='amount') criterion.ideal=Number(idealField.value);
+    state.criteria.push(criterion);
+    this.reset();
+    idealField.hidden=true;
+    renderCriteriaList();
+    renderIntakeCriteriaFields();
+    renderRuleLegend();
+    renderCsvFormatHint();
+  });
+
+  document.getElementById('csv-file').addEventListener('change', function(e){
+    const file=e.target.files[0];
+    const errEl=document.getElementById('csv-error');
+    errEl.textContent='';
+    if(!file) return;
+    document.getElementById('csv-filename').textContent=file.name;
+    const input=this;
+    const reader=new FileReader();
+    reader.onload=function(evt){
+      let rows;
+      try{ rows=parseCSVToObjects(evt.target.result); }
+      catch(err){ errEl.textContent="Couldn't read that file as CSV."; return; }
+      if(!rows.length){ errEl.textContent='No rows found in that file.'; return; }
+      let added=0;
+      rows.forEach(row=>{
+        const name=(findColumn(row,'Name')||'').toString().trim();
+        if(!name) return;
+        const elig={}, raw={};
+        state.criteria.forEach(c=>{
+          const cell=findColumn(row,c.name);
+          if(c.type==='bool'){ elig[c.letter]=parseBoolCell(cell); }
+          else{
+            const val=Number(cell);
+            raw[c.letter]=isNaN(val)?0:val;
+            elig[c.letter]=!isNaN(val) && val>=c.ideal;
+          }
+        });
+        const applicant={
+          id: state.nextId++,
+          name,
+          need: Number(findColumn(row,'Need'))||0,
+          merit: Number(findColumn(row,'Merit'))||0,
+          impact: Number(findColumn(row,'Impact'))||0,
+          elig, raw,
+          eligible: state.ruleApplied ? null : true
+        };
+        if(state.ruleApplied && state.simplifiedTree) applicant.eligible=evaluate(state.simplifiedTree, applicant.elig);
+        state.applicants.push(applicant);
+        added++;
+      });
+      if(added===0) errEl.textContent="No rows with a name column were found — check the file matches the format above.";
+      renderApplicants();
+      updateStats();
+      input.value='';
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById('rule-form').addEventListener('submit', function(e){ e.preventDefault(); applyRule(); });
+  document.getElementById('example-absorption').addEventListener('click', ()=>{
+    document.getElementById('rule-input').value='(A AND B) OR ((A AND B) AND C)';
+  });
+  document.getElementById('example-demorgan').addEventListener('click', ()=>{
+    document.getElementById('rule-input').value='NOT (NOT A OR NOT B)';
+  });
+
+  document.getElementById('build-map-btn').addEventListener('click', buildPriorityMap);
+
+  document.getElementById('tier-select').addEventListener('change', function(){
+    state.currentTierIndex=Number(this.value);
+    renderReviewQueue();
+  });
+  document.getElementById('review-prev').addEventListener('click', ()=>{
+    const cdll=state.reviewLists[state.currentTierIndex];
+    if(cdll){ cdll.prev(); renderReviewQueue(); }
+  });
+  document.getElementById('review-next').addEventListener('click', ()=>{
+    const cdll=state.reviewLists[state.currentTierIndex];
+    if(cdll){ cdll.next(); renderReviewQueue(); }
+  });
+
+  renderCriteriaList();
+  renderIntakeCriteriaFields();
+  renderRuleLegend();
+  renderCsvFormatHint();
+  renderApplicants();
+  updateStats();
+})();
+</script>
+</body>
+</html>
